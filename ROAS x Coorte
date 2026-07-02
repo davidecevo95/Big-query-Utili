@@ -1,0 +1,22 @@
+// Questa query calcola le performance di marketing e il ROAS (Return on Ad Spend) raggruppando gli utenti in base al giorno in cui sono stati acquisiti (chiamata "coorte", o cohort). Identifica il giorno in cui hanno convertito e poi fa vedere per ciascuna coorte 
+Il risultato finale è un report ordinato per data che mostra, giorno per giorno: il numero di utenti acquisiti, il fatturato che hanno portato, quanto si è speso in pubblicità e il ritorno sull'investimento (ROAS)
+
+
+SELECT
+  c.cohort_date,
+  COUNT(DISTINCT c.user_pseudo_id)                   AS users,
+  -- Revenue from GA4 purchases within observation window
+  SUM(e.ecommerce.purchase_revenue)                  AS revenue,
+  -- Spend from your ads cost table (upload manually or via Ads transfer)
+  SUM(s.cost)                                        AS spend,
+  SAFE_DIVIDE(SUM(e.ecommerce.purchase_revenue), SUM(s.cost)) AS roas
+FROM cohorts c
+-- All purchases made by cohort users
+LEFT JOIN `project.dataset.events_*` e
+  ON e.user_pseudo_id = c.user_pseudo_id
+  AND e.event_name = 'purchase'
+  AND e._TABLE_SUFFIX BETWEEN '20240101' AND '20240229'
+-- Daily ad spend by cohort acquisition date
+LEFT JOIN `project.dataset.spend` s ON s.date = c.cohort_date
+GROUP BY cohort_date
+ORDER BY cohort_date;
