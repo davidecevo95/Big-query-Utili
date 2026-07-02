@@ -1,0 +1,26 @@
+//questa query serve a trovare l'ultima azione (evento) che ogni utente ha compiuto subito prima di effettuare il suo primo acquisto. Trova il primo acquisto (WITH p AS ...): Per prima cosa, la query isola tutti gli utenti che hanno fatto un acquisto (event_name='purchase') e memorizza il momento esatto (MIN(event_timestamp)) in cui è avvenuto il loro primo acquisto in assoluto. Prende tutti gli eventi (e AS ...): Crea una lista pulita di tutte le azioni fatte da tutti gli utenti.
+Filtra prima dell'acquisto (WHERE e.ts < p.buy_ts): Unisce le due liste e tiene solo le azioni che sono avvenute prima del fatidico momento del primo acquisto. Prende l'ultimo evento utile (QUALIFY ROW_NUMBER()...): Ordina le azioni rimaste dalla più recente alla più vecchia per ciascun utente e seleziona solo la numero 1 (cioè l'ultima in ordine di tempo prima del "purchase").
+
+
+WITH p AS (
+  SELECT
+    user_pseudo_id u,
+    MIN(event_timestamp) buy_ts
+  FROM `project.dataset.events_*`
+  WHERE event_name='purchase'
+  GROUP BY 1
+),
+e AS (
+  SELECT
+    user_pseudo_id u,
+    event_name,
+    event_timestamp ts
+  FROM `project.dataset.events_*`
+)
+SELECT
+  e.u,
+  e.event_name
+FROM e
+JOIN p USING(u)
+WHERE e.ts < p.buy_ts
+QUALIFY ROW_NUMBER() OVER(PARTITION BY e.u ORDER BY e.ts DESC)=1;
