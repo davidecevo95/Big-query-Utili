@@ -1,0 +1,50 @@
+// Rapporta il lifetime value con il cac costo di acquisizione 
+Calcola il fatturato totale per utente (WITH ltv AS ...): Isola gli eventi di acquisto (purchase) tra gennaio 2023 e gennaio 2024 ed estrae dai parametri dell'evento il valore economico, sommandolo per ogni singolo utente (lifetime_rev).
+
+Trova la sorgente d'origine dell'utente (channel AS ...): Va a guardare il primissimo evento in assoluto di ogni utente per capire da quale canale è arrivato (src) e in quale mese si è registrato/collegato per la prima volta (acq_month).
+
+Calcola le metriche finali (SELECT ...):
+
+avg_ltv: Il valore medio speso dagli utenti di quel canale.
+
+cac: Prende la spesa pubblicitaria totale da una tabella esterna (ad_spend) e la divide per il numero di utenti acquisiti. Questo indica quanti euro di pubblicità sono serviti in media per "comprare" un utente.
+
+ltv_cac: Divide l'LTV per il CAC. Se questo valore è ad esempio 3, significa che gli utenti arrivati da quel canale ti stanno portando il triplo dei soldi che hai speso per acquisirli (un ottimo risultato!).
+
+Infine, la query ordina i risultati dal canale meno redditizio a quello più redditizio (ORDER BY ltv_cac), così da farti capire subito dove stai investendo bene il budget e dove lo stai sprecando.//
+
+-- LTV:CAC ratio by acquisition channel
+WITH ltv AS (
+  SELECT user_pseudo_id,
+    SUM((SELECT value.int_value FROM UNNEST(event_params)
+         WHERE key = 'value')) AS lifetime_rev
+  FROM `project.dataset.events_*`
+  WHERE _TABLE_SUFFIX BETWEEN '20230101' AND '20240131'
+    AND event_name = 'purchase'
+  GROUP BY 1
+),
+channel AS (
+  SELECT user_pseudo_id,
+    COALESCE(collected_traffic_source.manual_source,
+             traffic_source.source) AS src,
+    DATE_TRUNC(DATE(TIMESTAMP_MICROS(
+      user_first_touch_timestamp)), MONTH) AS acq_month
+  FROM `project.dataset.events_*`
+  WHERE _TABLE_SUFFIX BETWEEN '20230101' AND '20240131'
+  QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY user_pseudo_id
+    ORDER BY event_timestamp) = 1
+)
+SELECT c.src, c.acq_month,
+  AVG(l.lifetime_rev)                  AS avg_ltv,
+  SAFE_DIVIDE(s.spend,
+    COUNT(DISTINCT c.user_pseudo_id)) AS cac,
+  SAFE_DIVIDE(AVG(l.lifetime_rev),
+    SAFE_DIVIDE(s.spend,
+      COUNT(DISTINCT c.user_pseudo_id))) AS ltv_cac
+FROM channel c
+LEFT JOIN ltv l USING (user_pseudo_id)
+LEFT JOIN `project.dataset.ad_spend` s
+  ON c.src = s.channel AND c.acq_month = s.month
+GROUP BY 1, 2, s.spend
+ORDER BY ltv_cac;
