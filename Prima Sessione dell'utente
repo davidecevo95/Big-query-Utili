@@ -1,0 +1,28 @@
+// Questa query serve a identificare l'ID della primissima sessione di ogni utente all'interno del database di Google Analytics 4.
+In pratica, risponde alla domanda: "Qual è il codice identificativo della primissima visita che questo utente ha fatto sul mio sito o sulla mia app?"
+Ecco i passaggi chiave:
+Estrae i dati delle sessioni (WITH e AS ...): Prende l'ID dell'utente (u), va a scavare nei parametri nidificati di GA4 per estrarre l'ID numerico della sessione (sid) e segna il momento esatto dell'azione (ts).
+Trova il momento del primo ingresso (f AS ...): Per ogni singolo utente, calcola il timestamp più vecchio in assoluto (MIN(ts)), che rappresenta l'esatto millesimo di secondo in cui l'utente è apparso per la prima volta.
+Associa l'ID sessione corretto (SELECT ... JOIN): Unisce le due tabelle temporanee per "pescare" l'ID sessione (sid) che corrisponde esattamente a quel primo istante temporale.
+Il risultato finale è un elenco pulito composto da due colonne: l'identificativo dell'utente e il codice della sua prima sessione (first_session).
+
+WITH e AS (
+  SELECT
+    user_pseudo_id u,
+    (SELECT value.int_value FROM UNNEST(event_params) WHERE key='ga_session_id') sid,
+    event_timestamp ts
+  FROM `project.dataset.events_*`
+),
+f AS (
+  SELECT
+    u,
+    MIN(ts) first_ts
+  FROM e
+  GROUP BY 1
+)
+SELECT
+  e.u,
+  e.sid AS first_session
+FROM e
+JOIN f
+ON e.u=f.u AND e.ts=f.first_ts;
