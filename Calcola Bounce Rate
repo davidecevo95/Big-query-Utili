@@ -1,0 +1,21 @@
+// calcola il bounce rate 
+Analizza ogni singola sessione (WITH s AS ...): Raggruppa i dati per utente (u) e per singola visita (sid). Per ciascuna visita calcola due cose:
+events: Il numero totale di azioni/interazioni compiute dall'utente.
+pv: Quante di queste azioni erano visualizzazioni di pagina (page_view).
+Calcola il Bounce Rate (SELECT ...):
+Conta quante sessioni hanno registrato esattamente 1 solo evento in totale che fosse contemporaneamente 1 sola visualizzazione di pagina (COUNTIF(events=1 AND pv=1)).
+Divide questo numero per il totale complessivo di tutte le sessioni del sito (COUNT(*)).
+Il risultato finale sarà un numero decimale compreso tra 0 e 1 (moltiplicato idealmente per 100 per avere la percentuale) che indica quanto il traffico in ingresso sia "mordi e fuggi"
+
+WITH s AS (
+  SELECT
+    user_pseudo_id u,
+    (SELECT value.int_value FROM UNNEST(event_params) WHERE key='ga_session_id') sid,
+    COUNT(*) events,
+    COUNTIF(event_name='page_view') pv
+  FROM `project.dataset.events_*`
+  GROUP BY 1,2
+)
+SELECT
+  COUNTIF(events=1 AND pv=1)/COUNT(*) AS bounce_rate
+FROM s;
