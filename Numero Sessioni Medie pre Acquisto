@@ -1,0 +1,31 @@
+// Questa query calcola il numero medio di sessioni (visite) che un utente effettua prima di arrivare al suo primo acquisto 
+Isola il primo acquisto (WITH p AS ...): Identifica tutti gli utenti che hanno comprato qualcosa e trova il momento preciso del loro primissimo acquisto (first_purchase_ts).
+Mappa tutte le sessioni (s AS ...): Crea un elenco di tutte le sessioni del database, calcolando per ognuna il timestamp di inizio (s_ts).
+Filtra e conta le visite passate (FROM (SELECT ... WHERE s_ts < first_purchase_ts)): Unisce le tabelle per tenere traccia solo delle sessioni avvenute prima del primo acquisto. Poi, conta quante sono queste sessioni (COUNT(*) cnt) per ogni singolo utente (u).
+Calcola la media finale (SELECT AVG(cnt)...): Prende il numero di sessioni pre-acquisto calcolato per ciascun utente e ne fa la media matematica globale.//
+
+
+
+WITH p AS (
+  SELECT
+    user_pseudo_id u,
+    MIN(event_timestamp) first_purchase_ts
+  FROM `project.dataset.events_*`
+  WHERE event_name='purchase'
+  GROUP BY 1
+),
+s AS (
+  SELECT
+    user_pseudo_id u,
+    (SELECT value.int_value FROM UNNEST(event_params) WHERE key='ga_session_id') sid,
+    MIN(event_timestamp) s_ts
+  FROM `project.dataset.events_*`
+  GROUP BY 1,2
+)
+SELECT AVG(cnt) avg_sessions_before_purchase
+FROM (
+  SELECT u, COUNT(*) cnt
+  FROM s JOIN p USING(u)
+  WHERE s_ts < first_purchase_ts
+  GROUP BY 1
+);
