@@ -1,0 +1,3 @@
+Mi dispiace, ma l'immagine fornita non contiene uno screenshot di una query SQL di BigQuery. L'immagine mostra invece due grafici a linee distinti, uno etichettato "App" e uno etichettato "Web", che rappresentano l'andamento di alcuni dati nel tempo.
+
+Poiché non è presente alcuna query SQL da analizzare o trascrivere, non posso completare le richieste successive relative alla sua spiegazione e ai calcoli.
