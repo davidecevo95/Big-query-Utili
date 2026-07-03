@@ -1,0 +1,1 @@
+L'immagine fornita è un ritratto di una persona e non contiene uno screenshot di una query SQL di BigQuery. Pertanto, non posso trascrivere alcuna query né fornire commenti su di essa.
