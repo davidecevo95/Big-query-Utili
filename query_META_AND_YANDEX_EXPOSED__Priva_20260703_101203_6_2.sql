@@ -1,0 +1,3 @@
+Mi scuso, ma l'immagine fornita non contiene uno screenshot di una query SQL di BigQuery. L'immagine è un diagramma che illustra come le app Meta (Facebook, Instagram) e uno script Meta Pixel tracciano le interazioni dell'utente attraverso un browser mobile e app native, e come questi dati vengono trasmessi ai server Meta.
+
+Pertanto, non posso trascrivere alcuna query SQL né fornirne una spiegazione, in quanto non è presente nell'immagine.
