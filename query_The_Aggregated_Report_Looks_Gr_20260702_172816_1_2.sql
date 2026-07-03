@@ -1,1 +1,0 @@
-Mi dispiace, ma l'immagine fornita è un ritratto di una persona e non contiene uno screenshot di una query SQL di BigQuery. Non c'è alcun testo di codice SQL da trascrivere o analizzare.
