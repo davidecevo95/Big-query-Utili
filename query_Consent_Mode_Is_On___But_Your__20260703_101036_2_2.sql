@@ -1,0 +1,1 @@
+L'immagine fornita mostra uno screenshot dell'interfaccia di Google Tag Manager, non una query SQL di BigQuery. Non è presente alcun codice SQL nell'immagine.
